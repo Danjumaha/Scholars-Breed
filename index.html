@@ -492,7 +492,7 @@
                     <p><strong>Level:</strong> <span id="sum-level"></span></p>
                     <p><strong>Semester:</strong> <span id="sum-semester"></span></p>
                 </div>
-                <div class="price-tag">₦3,000</div>
+                <div class="price-tag">₦1,000</div>
                 <div class="form-group" style="margin-top: 20px;">                    
                     <label>👤 Full Name (For Receipt)</label>
                     <input type="text" id="input-name" placeholder="Enter your full name">
@@ -503,7 +503,7 @@
                 </div>
                 <div class="wizard-btns">
                     <button class="btn-prev" onclick="prevStep(4)">← Edit</button>
-                    <button class="btn-next" style="background: linear-gradient(135deg, #11998e, #38ef7d);" onclick="proceedToPayment()">💳 Pay ₦3,000 Now</button>
+                    <button class="btn-next" style="background: linear-gradient(135deg, #11998e, #38ef7d);" onclick="proceedToPayment()">💳 Pay ₦1,000 Now</button>
                 </div>
             </div>
 
@@ -722,7 +722,7 @@
             if (!validateEmail(userEmail)) return alert("⚠️ Please enter a valid email address.");
    
             const handler = PaystackPop.setup({
-                key: PAYSTACK_PUBLIC_KEY, email: userEmail, amount: 300000, currency: 'NGN',
+                key: PAYSTACK_PUBLIC_KEY, email: userEmail, amount: 100000, currency: 'NGN',
                 ref: 'SB_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
                 metadata: { custom_fields: [
                     { display_name: "Full Name", variable_name: "full_name", value: userFullName },
