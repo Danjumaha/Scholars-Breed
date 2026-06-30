@@ -1,0 +1,1458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎓 Student Dashboard - Scholars Breeding</title>
+    
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, query, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSy...",
+            authDomain: "highgradedli.firebaseapp.com",
+            projectId: "highgradedli",
+            storageBucket: "highgradedli.appspot.com",
+            messagingSenderId: "646678404662",
+            appId: "1:646678404662:web:64994e29c1f8901e7d8297"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        window.db = db;
+        window.firestoreFns = { collection, addDoc, getDocs, doc, updateDoc, query, where };
+    </script>
+
+    <style>
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --light: #f3f4f6;
+            --dark: #1a202c;
+            --white: #ffffff;
+            --success: #48bb78;
+            --danger: #f56565;
+            --gold: #ecc94b;
+            --text-primary: #1a237e;
+            --text-secondary: #4a5568;
+            --border-color: #e2e8f0;
+            --card-bg: #ffffff;
+            --input-bg: #f7fafc;
+        }
+
+        [data-theme="dark"] {
+            --light: #1a202c;
+            --white: #2d3748;
+            --dark: #f7fafc;
+            --text-primary: #f7fafc;
+            --text-secondary: #e2e8f0;
+            --border-color: #4a5568;            --card-bg: #2d3748;
+            --input-bg: #1a202c;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--text-primary);
+        }
+
+        .container {
+            background: var(--card-bg);
+            max-width: 900px;
+            margin: 0 auto;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            color: var(--text-primary);
+        }
+
+        /* ============ HEADER WITH LOGO ============ */
+        .main-header {
+            text-align: center;
+            padding: 20px 0 30px;
+            border-bottom: 2px solid var(--border-color);
+            margin-bottom: 30px;
+        }
+
+        .logo-section {
+            margin-bottom: 20px;
+        }
+
+        .school-logo {
+            width: 100px;
+            height: 100px;
+            object-fit: contain;
+            margin-bottom: 15px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .school-name {
+            font-size: 1.8rem;            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 5px;
+        }
+
+        .school-subtitle {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .admin-btn-container {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .admin-btn {
+            background: linear-gradient(135deg, var(--gold), #d69e2e);
+            color: #744210;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 15px rgba(236, 201, 75, 0.3);
+        }
+
+        .admin-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(236, 201, 75, 0.4);
+        }
+
+        /* ============ SECTIONS ============ */
+        .section { display: none; animation: fadeIn 0.4s ease; }
+        .section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ============ LOGIN ============ */
+        .login-card {
+            max-width: 500px;            margin: 30px auto;
+            text-align: center;
+            padding: 40px 30px;
+            background: var(--light);
+            border-radius: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+        }
+        .login-card h2 { color: var(--primary); margin-bottom: 10px; font-size: 1.8rem; }
+        .login-card p { color: var(--text-secondary); margin-bottom: 25px; font-size: 0.95rem; }
+        .login-card input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 1rem;
+            margin-bottom: 15px;
+            background: var(--input-bg);
+            color: var(--text-primary);
+            text-align: center;
+            letter-spacing: 1px;
+            transition: all 0.3s;
+        }
+        .login-card input:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
+        
+        /* ============ BUTTONS ============ */
+        button {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-top: 10px;
+        }
+        button:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        button.secondary { background: var(--light); color: var(--text-primary); border: 1px solid var(--border-color); }
+        button.gold { background: linear-gradient(135deg, #d69e2e, #ecc94b); color: #744210; }
+
+        /* ============ DASHBOARD HEADER ============ */
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            flex-wrap: wrap;            gap: 15px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--border-color);
+        }
+        .user-info h2 { color: var(--primary); font-size: 1.5rem; margin-bottom: 5px; }
+        .user-info p { color: var(--text-secondary); font-size: 0.9rem; }
+        .user-id-box {
+            background: var(--light);
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-weight: bold;
+            color: var(--primary);
+            border: 1px dashed var(--primary);
+            margin-top: 5px;
+            font-size: 0.85rem;
+            display: inline-block;
+        }
+
+        /* ============ STATS GRID ============ */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        .stat-card {
+            background: var(--light);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+            transition: transform 0.2s;
+        }
+        .stat-card:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.08); }
+        .stat-label { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 8px; }
+        .stat-value { font-size: 2rem; font-weight: bold; color: var(--primary); }
+
+        /* ============ SUBJECTS GRID ============ */
+        .subjects-section h3 { margin-bottom: 20px; color: var(--primary); font-size: 1.3rem; }
+        .subjects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        .subject-card {
+            background: var(--light);
+            padding: 25px 20px;
+            border-radius: 15px;            border: 2px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+        .subject-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.2);
+            background: white;
+        }
+        .subject-card .icon { font-size: 2.5rem; margin-bottom: 12px; }
+        .subject-card .code { font-weight: bold; color: var(--primary); font-size: 1.2rem; }
+        .subject-card .name { font-size: 0.9rem; color: var(--text-secondary); margin-top: 5px; }
+        .subject-card .q-count { 
+            margin-top: 12px; 
+            font-size: 0.8rem; 
+            background: var(--primary); 
+            color: white; 
+            padding: 5px 12px; 
+            border-radius: 15px; 
+            display: inline-block; 
+            font-weight: 600;
+        }
+
+        /* ============ FORM ELEMENTS ============ */
+        select, input, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 1rem;
+            background: var(--input-bg);
+            color: var(--text-primary);
+            margin-bottom: 15px;
+            transition: all 0.3s;
+        }
+        select:focus, input:focus, textarea:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
+        label { display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-primary); }
+
+        /* ============ EXAM INTERFACE ============ */
+        .exam-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 15px;
+            padding: 20px;
+            background: var(--light);            border-radius: 15px;
+        }
+        .timer-container { text-align: center; }
+        .timer-display { font-weight: bold; font-size: 2rem; color: var(--primary); }
+        .timer-bar { width: 200px; height: 8px; background: var(--border-color); border-radius: 4px; margin-top: 8px; overflow: hidden; }
+        .timer-progress { height: 100%; background: var(--success); width: 100%; transition: width 1s linear; }
+        .timer-progress.blue { background: #4299e1; }
+        .timer-progress.red { background: var(--danger); }
+
+        .question-box {
+            background: var(--light);
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            border-left: 5px solid var(--primary);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+        }
+        .question-text { font-size: 1.2rem; font-weight: 600; margin-bottom: 20px; line-height: 1.6; }
+        .voice-hint {
+            font-size: 0.9rem;
+            color: var(--primary);
+            cursor: pointer;
+            margin-top: 15px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 8px 15px;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 8px;
+            transition: 0.2s;
+        }
+        .voice-hint:hover { background: rgba(102, 126, 234, 0.2); }
+
+        .options-grid { display: grid; gap: 12px; margin-bottom: 25px; }
+        .option-btn {
+            background: var(--card-bg);
+            color: var(--text-primary);
+            text-align: left;
+            border: 2px solid var(--border-color);
+            padding: 18px;
+            border-radius: 12px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        .option-btn:hover:not(:disabled) { border-color: var(--primary); background: rgba(102, 126, 234, 0.05); transform: translateX(5px); }
+        .option-btn.correct { background: #c6f6d5; border-color: var(--success); color: #22543d; }        .option-btn.wrong { background: #fed7d7; border-color: var(--danger); color: #742a2a; }
+        .option-btn.time-up { background: #fed7d7; border-color: var(--danger); opacity: 0.6; }
+        .option-label { 
+            font-weight: bold; 
+            background: var(--primary); 
+            color: white; 
+            padding: 6px 12px; 
+            border-radius: 8px; 
+            min-width: 35px; 
+            text-align: center;
+        }
+        .option-btn.correct .option-label { background: var(--success); }
+        .option-btn.wrong .option-label { background: var(--danger); }
+
+        .explanation-box {
+            display: none;
+            background: #ebf8ff;
+            border-left: 4px solid #4299e1;
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 8px;
+            font-size: 1rem;
+            color: var(--text-primary);
+            animation: slideDown 0.3s ease;
+        }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        [data-theme="dark"] .explanation-box { background: #1a365d; border-left-color: #63b3ed; }
+
+        /* ============ EXAM NAVIGATION ============ */
+        .exam-nav { display: flex; gap: 12px; margin-top: 25px; }
+        .exam-nav button { flex: 1; }
+
+        /* ============ CALCULATOR BUTTON ============ */
+        .calc-toggle-btn-large {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            border: none;
+            padding: 16px 45px;
+            border-radius: 30px;
+            color: white;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(17, 153, 142, 0.4);
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            margin: 25px auto;
+            width: auto;
+        }        .calc-toggle-btn-large:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(17, 153, 142, 0.6); }
+
+        /* ============ RESULT ============ */
+        .result-card {
+            text-align: center;
+            padding: 40px;
+            background: var(--light);
+            border-radius: 20px;
+            margin-bottom: 25px;
+            border: 1px solid var(--border-color);
+        }
+        .score-display { font-size: 4rem; font-weight: bold; color: var(--primary); margin: 20px 0; }
+        .percentage { font-size: 1.8rem; color: var(--primary); margin-bottom: 20px; }
+        .grade-badge { 
+            display: inline-block; 
+            padding: 10px 30px; 
+            border-radius: 30px; 
+            color: white; 
+            font-weight: bold; 
+            font-size: 1.2rem;
+            margin-top: 15px; 
+        }
+        .grade-excellence { background: var(--success); }
+        .grade-good { background: var(--gold); color: #744210; }
+        .grade-fair { background: var(--danger); }
+
+        .result-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin: 30px 0;
+        }
+        .result-stat {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+        }
+        .result-stat .label { font-size: 0.9rem; color: var(--text-secondary); }
+        .result-stat .value { font-size: 2rem; font-weight: bold; color: var(--primary); margin-top: 8px; }
+
+        /* ============ FLOATING CONTROLS ============ */
+        .floating-controls {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;            z-index: 100;
+        }
+        .float-btn {
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(5px);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #4a5568;
+            font-size: 1.4rem;
+            border: 2px solid rgba(102, 126, 234, 0.3);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            transition: transform 0.2s;
+        }
+        .float-btn:hover { transform: scale(1.15); }
+        .float-btn.muted { color: var(--danger); }
+        .sound-toggle:not(.muted)::after { content: '🔊'; }
+        .sound-toggle.muted::after { content: '🔇'; }
+        .theme-toggle::after { content: '🌙'; }
+        [data-theme="dark"] .theme-toggle::after { content: '☀️'; }
+
+        /* ============ COUNTDOWN OVERLAY ============ */
+        #countdown-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            font-size: 12rem;
+            color: white;
+            font-weight: bold;
+            z-index: 1000;
+            animation: pulse 1s ease-in-out;
+        }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+
+        /* ============ FEEDBACK OVERLAY ============ */
+        #feedback-overlay {
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%) scale(1);
+            font-size: 3.5rem;
+            font-weight: bold;
+            pointer-events: none;            opacity: 0;
+            z-index: 999;
+            transition: all 0.3s;
+            text-shadow: 2px 2px 15px rgba(0,0,0,0.3);
+        }
+
+        /* ============ ANIMATIONS ============ */
+        @keyframes popIn { 
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+            50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translate(-50%, -50%); }
+            25% { transform: translate(-52%, -50%); }
+            75% { transform: translate(-48%, -50%); }
+        }
+        .anim-pop { animation: popIn 0.3s ease; }
+        .anim-shake { animation: shake 0.3s ease; }
+
+        /* ============ RESPONSIVE ============ */
+        @media (max-width: 768px) {
+            .container { padding: 20px; }
+            .school-logo { width: 80px; height: 80px; }
+            .school-name { font-size: 1.4rem; }
+            .dashboard-header { flex-direction: column; text-align: center; }
+            .exam-header { flex-direction: column; text-align: center; }
+            .timer-bar { width: 150px; }
+            .score-display { font-size: 3rem; }
+            .result-stats { grid-template-columns: 1fr; }
+            .subjects-grid { grid-template-columns: 1fr; }
+            #countdown-overlay { font-size: 8rem; }
+        }
+    </style>
+</head>
+<body>
+    <!-- FLOATING CONTROLS -->
+    <div class="floating-controls">
+        <div class="float-btn sound-toggle" id="sound-toggle"></div>
+        <div class="float-btn theme-toggle" id="theme-toggle"></div>
+    </div>
+
+    <!-- COUNTDOWN OVERLAY -->
+    <div id="countdown-overlay">3</div>
+
+    <!-- FEEDBACK OVERLAY -->
+    <div id="feedback-overlay"></div>
+
+    <div class="container">
+        <!-- ============ HEADER WITH LOGO ============ -->
+        <header class="main-header">
+            <div class="logo-section">
+                <img src="logo.png" alt="Scholars Breeding Logo" class="school-logo" onerror="this.style.display='none'">
+                <h1 class="school-name">Scholars Breeding</h1>
+                <p class="school-subtitle">Premier Academic Excellence Platform</p>
+            </div>
+            <div class="admin-btn-container">
+                <button class="admin-btn" onclick="goToAdmin()">
+                    ⚙️ Breeder's Access
+                </button>
+            </div>
+        </header>
+
+        <!-- ============ LOGIN SECTION ============ -->
+        <div id="login-section" class="section active">
+            <div class="login-card">
+                <h2>🎓 Student Login</h2>
+                <p>Enter your Access ID to continue to your dashboard</p>
+                <input type="text" id="access-id-input" placeholder="e.g., COM-ACC-200-1-X9F2" style="text-transform: uppercase;">
+                <button onclick="studentLogin()">🚀 Access Dashboard</button>
+                <p style="margin-top: 20px; font-size: 0.9rem; color: var(--text-secondary);">
+                    Don't have an ID? <a href="index.html" style="color: var(--primary); font-weight: bold; text-decoration: none;">Register Now</a>
+                </p>
+            </div>
+        </div>
+
+        <!-- ============ DASHBOARD SECTION ============ -->
+        <div id="dashboard-section" class="section">
+            <div class="dashboard-header">
+                <div class="user-info">
+                    <h2>Welcome, <span id="user-name"></span>! 👋</h2>
+                    <p id="user-course-info"></p>
+                    <div class="user-id-box">🆔 <span id="user-access-id"></span></div>
+                </div>
+                <button class="secondary" style="width: auto; padding: 10px 25px;" onclick="studentLogout()">🚪 Logout</button>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">📚 Subjects</div>
+                    <div class="stat-value" id="stat-subjects">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">📝 Exams Taken</div>
+                    <div class="stat-value" id="stat-exams">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">📊 Avg Score</div>
+                    <div class="stat-value" id="stat-avg">0%</div>                </div>
+            </div>
+
+            <div class="subjects-section">
+                <h3>📚 Your Subjects</h3>
+                <div id="subjects-grid" class="subjects-grid">
+                    <p style="color: var(--text-secondary);">Loading subjects...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============ TOPIC SELECTION ============ -->
+        <div id="topic-section" class="section">
+            <h2 style="color: var(--primary); margin-bottom: 20px; font-size: 1.6rem;">📖 Select Topic</h2>
+            <p style="margin-bottom: 25px; font-size: 1.1rem;"><strong>Subject:</strong> <span id="selected-subject-display" style="color: var(--primary);"></span></p>
+            
+            <label>Choose a topic to practice:</label>
+            <select id="topic-select">
+                <option value="" disabled selected>Select a Topic</option>
+                <option value="all">📖 All Topics (Full Practice)</option>
+            </select>
+
+            <div id="topic-question-count" style="display:none; text-align:center; margin: 20px 0; background:var(--light); padding:20px; border-radius:12px;">
+                <strong>📊 Available:</strong> <span id="q-count-display" style="color:var(--primary); font-size:1.5rem; font-weight:bold;">0</span> Questions
+            </div>
+
+            <button id="proceed-to-mode-btn" onclick="goToModeSelection()" disabled>➡️ Choose Exam Mode</button>
+            <button class="secondary" onclick="showSection('dashboard-section')">← Back to Dashboard</button>
+        </div>
+
+        <!-- ============ MODE SELECTION ============ -->
+        <div id="mode-section" class="section">
+            <h2 style="color: var(--primary); margin-bottom: 20px; font-size: 1.6rem;">🎯 Choose Exam Mode</h2>
+            <p style="margin-bottom: 25px; font-size: 1.1rem;"><strong>Topic:</strong> <span id="selected-topic-display" style="color: var(--primary);"></span></p>
+
+            <label>Select your preferred exam mode:</label>
+            <select id="mode-select">
+                <option value="beginner">🟢 Beginner (Relaxed - 2 hours)</option>
+                <option value="advance">🔵 Advance (45 seconds per question)</option>
+                <option value="professional">🔴 Professional (30 seconds - JAMB Style)</option>
+            </select>
+
+            <button class="gold" onclick="startExam()">🎬 Start Exam</button>
+            <button class="secondary" onclick="showSection('topic-section')">← Back</button>
+        </div>
+
+        <!-- ============ EXAM SECTION ============ -->
+        <div id="exam-section" class="section">
+            <div class="exam-header">
+                <div>                    <strong id="subject-badge" style="color: var(--primary); font-size: 1.2rem;">SUBJECT</strong><br>
+                    <small id="mode-badge" style="color: var(--text-secondary);">Mode</small>
+                </div>
+                <div class="timer-container">
+                    <div class="timer-display" id="timer-display">05:00</div>
+                    <div class="timer-bar"><div class="timer-progress" id="timer-progress"></div></div>
+                </div>
+                <div style="text-align:right;">
+                    <strong id="question-counter" style="color: var(--primary);">Q: 1/10</strong><br>
+                    <small>Score: <span id="live-score" style="color: var(--success); font-weight: bold;">0</span></small>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin: 25px 0;">
+                <button class="calc-toggle-btn-large" onclick="openCalculator()">
+                    <span style="font-size: 1.5rem;">📊</span> Calculator
+                </button>
+            </div>
+
+            <div class="question-box">
+                <div class="question-text" id="q-text">Loading question...</div>
+                <div class="voice-hint" onclick="replayCurrentQuestion()">🔊 Replay Audio</div>
+            </div>
+
+            <div class="options-grid" id="options-container"></div>
+
+            <div class="explanation-box" id="explanation-box">
+                <strong>💡 Explanation:</strong> <span id="explanation-text"></span>
+            </div>
+
+            <div class="exam-nav">
+                <button class="secondary" id="prev-btn" onclick="prevQuestion()">⬅️ Previous</button>
+                <button id="next-btn" onclick="nextQuestion()">Next ➡️</button>
+                <button id="submit-btn" class="gold" onclick="finishExam(true)" style="display:none;">✅ Submit Exam</button>
+            </div>
+
+            <button class="secondary" onclick="confirmQuitExam()" style="margin-top: 20px; font-size: 0.9rem;">🚪 Quit Exam</button>
+        </div>
+
+        <!-- ============ RESULT SECTION ============ -->
+        <div id="result-section" class="section">
+            <h2 style="text-align: center; color: var(--primary); margin-bottom: 25px; font-size: 2rem;">🎉 Exam Completed!</h2>
+            
+            <div class="result-card">
+                <div style="font-size: 1.2rem; color: var(--text-secondary);">Your Score</div>
+                <div class="score-display" id="final-score">0/10</div>
+                <div class="percentage" id="percentage">0%</div>
+                <div class="grade-badge" id="grade-display">Pending</div>
+                <p id="feedback-msg" style="margin-top: 20px; font-style: italic; color: var(--text-secondary); font-size: 1.1rem;"></p>
+            </div>
+            <div class="result-stats">
+                <div class="result-stat">
+                    <div class="label">✅ Correct</div>
+                    <div class="value" id="correct-count">0</div>
+                </div>
+                <div class="result-stat">
+                    <div class="label">❌ Wrong</div>
+                    <div class="value" id="wrong-count">0</div>
+                </div>
+                <div class="result-stat">
+                    <div class="label">⏱️ Time Used</div>
+                    <div class="value" id="time-used">00:00</div>
+                </div>
+            </div>
+
+            <button onclick="showSection('dashboard-section')">🔄 Back to Dashboard</button>
+            <button class="secondary" onclick="studentLogout()">🚪 Logout</button>
+        </div>
+
+    </div>
+
+    <script>
+        // ==========================================
+        // 🔐 CONFIGURATION
+        // ==========================================
+        let currentUser = null;
+        let currentSubject = null;
+        let currentTopic = null;
+        let currentMode = '';
+        let currentQuestions = [];
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let timerInterval;
+        let timeLeft = 0;
+        let totalTime = 0;
+        let timePerQuestion = 0;
+        let examStartTime = 0;
+        let isSoundEnabled = true;
+        let userAnswers = {};
+        let nextQuestionTimeout = null;
+        let allSubjects = [];
+        let allTopics = [];
+
+        const speechSynthesis = window.speechSynthesis;
+        const positiveMessages = ["Wow!", "Amazing!", "Nice one!", "Good job!", "Excellent!", "Perfect!", "Correct!", "Fantastic!"];
+        const negativeMessages = ["Oh sorry!", "Try again!", "Not quite!", "Incorrect!", "Wrong answer!", "Keep trying!"];
+
+        // ==========================================
+        // 🎨 THEME & SOUND TOGGLES        // ==========================================
+        if (localStorage.getItem('hgdl_theme') === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        }
+
+        document.getElementById('sound-toggle').addEventListener('click', function() {
+            isSoundEnabled = !isSoundEnabled;
+            this.classList.toggle('muted', !isSoundEnabled);
+            if (isSoundEnabled) speak("Sound enabled");
+            else speechSynthesis?.cancel();
+        });
+
+        document.getElementById('theme-toggle').addEventListener('click', function() {
+            const current = document.documentElement.getAttribute('data-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('hgdl_theme', next);
+        });
+
+        // ==========================================
+        // 🧭 NAVIGATION
+        // ==========================================
+        function showSection(sectionId) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById(sectionId).classList.add('active');
+            
+            if (sectionId !== 'exam-section') {
+                clearInterval(timerInterval);
+                if (nextQuestionTimeout) { clearTimeout(nextQuestionTimeout); nextQuestionTimeout = null; }
+            }
+            
+            window.scrollTo(0, 0);
+        }
+
+        function goToAdmin() {
+            window.location.href = 'admin.html';
+        }
+
+        // ==========================================
+        // 🔐 STUDENT LOGIN
+        // ==========================================
+        async function studentLogin() {
+            const accessId = document.getElementById('access-id-input').value.trim().toUpperCase();
+            if (!accessId) return alert('⚠️ Please enter your Access ID');
+
+            try {
+                const q = query(collection(window.db, "registrations"), where("accessId", "==", accessId));
+                const snap = await getDocs(q);
+
+                if (snap.empty) {                    alert('❌ Invalid Access ID. Please check and try again.');
+                    return;
+                }
+                const userData = snap.docs[0].data();
+                
+                if (userData.status !== 'active') {
+                    alert('⏸️ Your account has been paused. Please contact support.');
+                    return;
+                }
+
+                currentUser = {
+                    id: snap.docs[0].id,
+                    ...userData
+                };
+
+                // Update UI
+                document.getElementById('user-name').textContent = userData.fullName;
+                document.getElementById('user-course-info').textContent = 
+                    `${userData.department} → ${userData.course} → ${userData.level} Level → ${userData.semester} Semester`;
+                document.getElementById('user-access-id').textContent = userData.accessId;
+
+                showSection('dashboard-section');
+                loadDashboard();
+
+                if (isSoundEnabled) speak(`Welcome ${userData.fullName}`);
+
+            } catch (e) {
+                console.error('Login error:', e);
+                alert('❌ Connection error: ' + e.message);
+            }
+        }
+
+        function studentLogout() {
+            if (!confirm('Are you sure you want to logout?')) return;
+            currentUser = null;
+            document.getElementById('access-id-input').value = '';
+            showSection('login-section');
+        }
+
+        // ==========================================
+        // 📊 DASHBOARD
+        // ==========================================
+        async function loadDashboard() {
+            try {
+                // Load subjects for this course
+                const q = query(collection(window.db, "subjects"), where("courseId", "==", currentUser.courseId));
+                const snap = await getDocs(q);
+                allSubjects = [];
+                snap.forEach(d => allSubjects.push({ id: d.id, ...d.data() }));
+                document.getElementById('stat-subjects').textContent = allSubjects.length;
+                // Load progress
+                const progressQ = query(collection(window.db, "progress"), where("user", "==", currentUser.accessId));
+                const progressSnap = await getDocs(progressQ);
+                let totalAttempts = 0;
+                let totalScore = 0;
+                progressSnap.forEach(d => {
+                    const p = d.data();
+                    totalAttempts += p.attempts || 0;
+                    totalScore += p.totalScore || 0;
+                });
+
+                document.getElementById('stat-exams').textContent = totalAttempts;
+                const avg = totalAttempts > 0 ? Math.round(totalScore / totalAttempts) : 0;
+                document.getElementById('stat-avg').textContent = avg + '%';
+
+                // Render subjects grid
+                const grid = document.getElementById('subjects-grid');
+                if (allSubjects.length === 0) {
+                    grid.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 40px;">No subjects available yet. Check back later!</p>';
+                    return;
+                }
+
+                grid.innerHTML = allSubjects.map(s => `
+                    <div class="subject-card" onclick="selectSubject('${s.id}')">
+                        <div class="icon">📚</div>
+                        <div class="code">${s.code}</div>
+                        <div class="name">${s.name}</div>
+                        <div class="q-count" id="q-count-${s.id}">Loading...</div>
+                    </div>
+                `).join('');
+
+                // Load question counts for each subject
+                for (const s of allSubjects) {
+                    const qCount = query(collection(window.db, "questions"), where("subjectId", "==", s.id));
+                    const qSnap = await getDocs(qCount);
+                    document.getElementById(`q-count-${s.id}`).textContent = `${qSnap.size} Questions`;
+                }
+
+            } catch (e) {
+                console.error('Error loading dashboard:', e);
+            }
+        }
+
+        // ==========================================
+        // 📖 TOPIC SELECTION
+        // ==========================================
+        async function selectSubject(subjectId) {
+            currentSubject = allSubjects.find(s => s.id === subjectId);
+            document.getElementById('selected-subject-display').textContent = `${currentSubject.code} - ${currentSubject.name}`;            showSection('topic-section');
+
+            // Load topics
+            try {
+                const q = query(collection(window.db, "topics"), where("subjectId", "==", subjectId));
+                const snap = await getDocs(q);
+                allTopics = [];
+                snap.forEach(d => allTopics.push({ id: d.id, ...d.data() }));
+
+                const topicSelect = document.getElementById('topic-select');
+                topicSelect.innerHTML = '<option value="" disabled selected>Select a Topic</option><option value="all">📖 All Topics (Full Practice)</option>';
+                
+                allTopics.forEach(t => {
+                    const opt = document.createElement('option');
+                    opt.value = t.id;
+                    opt.textContent = t.name;
+                    topicSelect.appendChild(opt);
+                });
+
+                document.getElementById('topic-question-count').style.display = 'none';
+                document.getElementById('proceed-to-mode-btn').disabled = true;
+
+                // Add change listener
+                topicSelect.onchange = async function() {
+                    const val = this.value;
+                    if (!val) {
+                        document.getElementById('topic-question-count').style.display = 'none';
+                        document.getElementById('proceed-to-mode-btn').disabled = true;
+                        return;
+                    }
+
+                    let q;
+                    if (val === 'all') {
+                        q = query(collection(window.db, "questions"), where("subjectId", "==", subjectId));
+                    } else {
+                        q = query(collection(window.db, "questions"), where("subjectId", "==", subjectId), where("topicId", "==", val));
+                    }
+
+                    const qSnap = await getDocs(q);
+                    const count = qSnap.size;
+
+                    document.getElementById('q-count-display').textContent = count;
+                    document.getElementById('topic-question-count').style.display = 'block';
+                    document.getElementById('proceed-to-mode-btn').disabled = (count === 0);
+
+                    if (count === 0) {
+                        alert('⚠️ No questions available for this topic yet!');
+                    }
+                };
+            } catch (e) {                console.error('Error loading topics:', e);
+            }
+        }
+
+        function goToModeSelection() {
+            const topicVal = document.getElementById('topic-select').value;
+            if (!topicVal) return alert('⚠️ Please select a topic');
+
+            currentTopic = topicVal;
+            const topicName = topicVal === 'all' ? 'All Topics' : allTopics.find(t => t.id === topicVal)?.name || 'Unknown';
+            document.getElementById('selected-topic-display').textContent = topicName;
+
+            showSection('mode-section');
+        }
+
+        // ==========================================
+        // 🎯 EXAM START
+        // ==========================================
+        async function startExam() {
+            currentMode = document.getElementById('mode-select').value;
+
+            try {
+                let q;
+                if (currentTopic === 'all') {
+                    q = query(collection(window.db, "questions"), where("subjectId", "==", currentSubject.id));
+                } else {
+                    q = query(collection(window.db, "questions"), where("subjectId", "==", currentSubject.id), where("topicId", "==", currentTopic));
+                }
+
+                const snap = await getDocs(q);
+                let questions = [];
+                snap.forEach(d => questions.push({ id: d.id, ...d.data() }));
+
+                if (questions.length === 0) {
+                    alert('⚠️ No questions available!');
+                    return;
+                }
+
+                // Shuffle questions
+                currentQuestions = questions.sort(() => Math.random() - 0.5);
+                currentQuestionIndex = 0;
+                score = 0;
+                userAnswers = {};
+                examStartTime = Date.now();
+
+                // Set timer based on mode
+                if (currentMode === 'beginner') {
+                    timePerQuestion = 0;
+                    totalTime = 7200; // 2 hours
+                } else if (currentMode === 'advance') {                    timePerQuestion = 45;
+                    totalTime = currentQuestions.length * 45;
+                } else {
+                    timePerQuestion = 30;
+                    totalTime = currentQuestions.length * 30;
+                }
+
+                timeLeft = timePerQuestion > 0 ? timePerQuestion : totalTime;
+
+                // Update UI
+                document.getElementById('subject-badge').textContent = currentSubject.code;
+                document.getElementById('mode-badge').textContent = currentMode.charAt(0).toUpperCase() + currentMode.slice(1) + ' Mode';
+
+                startTimer();
+                showSection('exam-section');
+
+                // Countdown
+                runCountdown(() => {
+                    loadQuestion(0);
+                    if (isSoundEnabled) speakQuestion(currentQuestions[0]);
+                });
+
+            } catch (e) {
+                console.error('Error starting exam:', e);
+                alert('❌ Failed to load questions: ' + e.message);
+            }
+        }
+
+        function runCountdown(callback) {
+            const overlay = document.getElementById('countdown-overlay');
+            overlay.style.display = 'flex';
+            let count = 3;
+            overlay.textContent = count;
+
+            if (isSoundEnabled) speak(count.toString());
+
+            const interval = setInterval(() => {
+                count--;
+                if (count > 0) {
+                    overlay.textContent = count;
+                    if (isSoundEnabled) speak(count.toString());
+                } else {
+                    clearInterval(interval);
+                    overlay.style.display = 'none';
+                    if (isSoundEnabled) speak("Go!");
+                    callback();
+                }
+            }, 1000);
+        }
+        // ==========================================
+        // ⏱️ TIMER
+        // ==========================================
+        function startTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            updateTimerDisplay();
+
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay();
+
+                if (timeLeft <= 0) {
+                    handleTimeUp();
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+            const s = (timeLeft % 60).toString().padStart(2, '0');
+            document.getElementById('timer-display').textContent = `${m}:${s}`;
+
+            const pct = timePerQuestion > 0 ? (timeLeft / timePerQuestion) * 100 : (timeLeft / totalTime) * 100;
+            const bar = document.getElementById('timer-progress');
+            bar.style.width = `${pct}%`;
+            bar.className = 'timer-progress ' + (pct < 30 ? 'red' : pct < 60 ? 'blue' : '');
+        }
+
+        function handleTimeUp() {
+            if (userAnswers[currentQuestionIndex] !== undefined) return;
+
+            userAnswers[currentQuestionIndex] = -1;
+            loadQuestion(currentQuestionIndex);
+
+            if (isSoundEnabled) {
+                playTone(150, 0.3);
+                speak("Time's up!");
+            }
+
+            if (nextQuestionTimeout) clearTimeout(nextQuestionTimeout);
+            nextQuestionTimeout = setTimeout(() => {
+                if (currentQuestionIndex < currentQuestions.length - 1) {
+                    currentQuestionIndex++;
+                    loadQuestion(currentQuestionIndex);
+                    if (timePerQuestion > 0) {
+                        timeLeft = timePerQuestion;
+                        startTimer();
+                    }
+                    if (isSoundEnabled) speakQuestion(currentQuestions[currentQuestionIndex]);
+                } else {                    finishExam(false);
+                }
+            }, 5000);
+        }
+
+        // ==========================================
+        // 📝 LOAD QUESTION
+        // ==========================================
+        function loadQuestion(idx) {
+            if (!currentQuestions[idx]) return;
+
+            const q = currentQuestions[idx];
+            document.getElementById('q-text').textContent = q.q;
+            document.getElementById('question-counter').textContent = `Q: ${idx + 1}/${currentQuestions.length}`;
+            document.getElementById('live-score').textContent = score;
+
+            const expBox = document.getElementById('explanation-box');
+            const hasAnswered = userAnswers[idx] !== undefined;
+
+            if (hasAnswered) {
+                expBox.style.display = 'block';
+                if (userAnswers[idx] === -1) {
+                    expBox.innerHTML = '<strong style="color: var(--danger);">⏰ Time Up!</strong><br>' + q.exp;
+                } else {
+                    expBox.innerHTML = '<strong>💡 Explanation:</strong> ' + q.exp;
+                }
+            } else {
+                expBox.style.display = 'none';
+            }
+
+            const container = document.getElementById('options-container');
+            container.innerHTML = '';
+
+            q.options.forEach((opt, i) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.innerHTML = `<span class="option-label">${String.fromCharCode(65 + i)}</span> ${opt}`;
+
+                if (hasAnswered) {
+                    btn.disabled = true;
+                    if (userAnswers[idx] === -1) {
+                        if (i === q.answer) btn.classList.add('correct');
+                        else btn.classList.add('time-up');
+                    } else {
+                        if (i === q.answer) btn.classList.add('correct');
+                        else if (i === userAnswers[idx]) btn.classList.add('wrong');
+                    }
+                } else {
+                    btn.onclick = () => handleAnswer(idx, i, btn);
+                }
+                container.appendChild(btn);
+            });
+
+            document.getElementById('prev-btn').disabled = (idx === 0);
+            const isLast = (idx === currentQuestions.length - 1);
+            document.getElementById('next-btn').style.display = isLast ? 'none' : 'block';
+            document.getElementById('submit-btn').style.display = isLast ? 'block' : 'none';
+        }
+
+        // ==========================================
+        // ✅ HANDLE ANSWER
+        // ==========================================
+        function handleAnswer(idx, optIdx, btn) {
+            if (userAnswers[idx] !== undefined) return;
+
+            if (nextQuestionTimeout) { clearTimeout(nextQuestionTimeout); nextQuestionTimeout = null; }
+            if (speechSynthesis) speechSynthesis.cancel();
+
+            userAnswers[idx] = optIdx;
+            const correct = currentQuestions[idx].answer;
+            const allBtns = document.querySelectorAll('.option-btn');
+            allBtns.forEach(b => b.disabled = true);
+
+            if (optIdx === correct) {
+                btn.classList.add('correct', 'anim-pop');
+                score++;
+                document.getElementById('live-score').textContent = score;
+
+                if (isSoundEnabled) {
+                    playTone(880, 0.1);
+                    setTimeout(() => playTone(1100, 0.1), 100);
+                }
+
+                showFeedbackOverlay(true);
+            } else {
+                btn.classList.add('wrong', 'anim-shake');
+                if (allBtns[correct]) allBtns[correct].classList.add('correct');
+
+                if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+
+                if (isSoundEnabled) {
+                    playTone(200, 0.2);
+                }
+
+                showFeedbackOverlay(false);
+            }
+
+            document.getElementById('explanation-box').style.display = 'block';
+            document.getElementById('explanation-text').textContent = currentQuestions[idx].exp;
+            // Auto-advance for advance/professional modes
+            if (currentMode === 'advance' || currentMode === 'professional') {
+                nextQuestionTimeout = setTimeout(() => {
+                    if (idx < currentQuestions.length - 1) {
+                        currentQuestionIndex++;
+                        loadQuestion(currentQuestionIndex);
+                        if (timePerQuestion > 0) {
+                            timeLeft = timePerQuestion;
+                            startTimer();
+                        }
+                        if (isSoundEnabled) speakQuestion(currentQuestions[currentQuestionIndex]);
+                    } else {
+                        finishExam(false);
+                    }
+                }, 5000);
+            }
+        }
+
+        // ==========================================
+        // 🔊 VOICE & SOUND
+        // ==========================================
+        function speak(text) {
+            if (!isSoundEnabled || !speechSynthesis) return;
+            speechSynthesis.cancel();
+            const u = new SpeechSynthesisUtterance(text);
+            u.rate = 0.9;
+            speechSynthesis.speak(u);
+        }
+
+        function speakQuestion(q) {
+            if (!isSoundEnabled || !speechSynthesis) return;
+            speechSynthesis.cancel();
+
+            const questionUtterance = new SpeechSynthesisUtterance(q.q);
+            questionUtterance.rate = 0.85;
+
+            questionUtterance.onend = function() {
+                let optionIndex = 0;
+                function speakNextOption() {
+                    if (optionIndex >= q.options.length) return;
+                    const letter = String.fromCharCode(65 + optionIndex);
+                    const optionText = `Option ${letter}. ${q.options[optionIndex]}`;
+                    const optionUtterance = new SpeechSynthesisUtterance(optionText);
+                    optionUtterance.rate = 0.85;
+                    optionUtterance.onend = function() {
+                        optionIndex++;
+                        setTimeout(speakNextOption, 400);
+                    };
+                    speechSynthesis.speak(optionUtterance);                }
+                speakNextOption();
+            };
+
+            speechSynthesis.speak(questionUtterance);
+        }
+
+        function replayCurrentQuestion() {
+            if (currentQuestions.length > 0) {
+                speakQuestion(currentQuestions[currentQuestionIndex]);
+            }
+        }
+
+        function playTone(frequency, duration) {
+            if (!isSoundEnabled) return;
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                oscillator.frequency.value = frequency;
+                oscillator.type = 'sine';
+                gainNode.gain.value = 0.1;
+                oscillator.start();
+                setTimeout(() => { oscillator.stop(); audioCtx.close(); }, duration * 1000);
+            } catch (e) {}
+        }
+
+        function showFeedbackOverlay(isCorrect) {
+            const overlay = document.getElementById('feedback-overlay');
+            let msg = "", color = "";
+
+            if (isCorrect) {
+                msg = positiveMessages[Math.floor(Math.random() * positiveMessages.length)];
+                color = "#2e7d32";
+                overlay.style.animation = "popIn 0.3s forwards";
+            } else {
+                msg = negativeMessages[Math.floor(Math.random() * negativeMessages.length)];
+                color = "#c62828";
+                overlay.style.animation = "shake 0.3s forwards";
+            }
+
+            overlay.textContent = msg;
+            overlay.style.color = color;
+            overlay.style.opacity = "1";
+
+            if (isSoundEnabled) speak(msg);
+            setTimeout(() => {
+                overlay.style.opacity = "0";            }, 1500);
+        }
+
+        // ==========================================
+        // 🧭 NAVIGATION
+        // ==========================================
+        function nextQuestion() {
+            if (currentQuestionIndex < currentQuestions.length - 1) {
+                if (nextQuestionTimeout) { clearTimeout(nextQuestionTimeout); nextQuestionTimeout = null; }
+                clearInterval(timerInterval);
+                currentQuestionIndex++;
+                loadQuestion(currentQuestionIndex);
+                if (timePerQuestion > 0 && userAnswers[currentQuestionIndex] === undefined) {
+                    timeLeft = timePerQuestion;
+                    startTimer();
+                }
+                if (isSoundEnabled) speakQuestion(currentQuestions[currentQuestionIndex]);
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                if (nextQuestionTimeout) { clearTimeout(nextQuestionTimeout); nextQuestionTimeout = null; }
+                clearInterval(timerInterval);
+                currentQuestionIndex--;
+                loadQuestion(currentQuestionIndex);
+                if (timePerQuestion > 0 && userAnswers[currentQuestionIndex] === undefined) {
+                    timeLeft = timePerQuestion;
+                    startTimer();
+                }
+            }
+        }
+
+        function confirmQuitExam() {
+            if (confirm('⚠️ Are you sure you want to quit? Your progress will be lost!')) {
+                showSection('dashboard-section');
+            }
+        }
+
+        // ==========================================
+        // 🎉 FINISH EXAM
+        // ==========================================
+        async function finishExam(manual) {
+            clearInterval(timerInterval);
+            if (nextQuestionTimeout) { clearTimeout(nextQuestionTimeout); nextQuestionTimeout = null; }
+
+            const timeUsed = Math.floor((Date.now() - examStartTime) / 1000);
+            const mins = Math.floor(timeUsed / 60);
+            const secs = timeUsed % 60;
+            const total = currentQuestions.length;
+            const percentage = Math.round((score / total) * 100);
+
+            // Save progress
+            try {
+                const q = query(collection(window.db, "progress"), 
+                    where("user", "==", currentUser.accessId), 
+                    where("subjectId", "==", currentSubject.id));
+                const snap = await getDocs(q);
+
+                if (snap.empty) {
+                    await addDoc(collection(window.db, "progress"), {
+                        user: currentUser.accessId,
+                        subjectId: currentSubject.id,
+                        attempts: 1,
+                        totalScore: percentage,
+                        lastDate: new Date()
+                    });
+                } else {
+                    const docId = snap.docs[0].id;
+                    const oldData = snap.docs[0].data();
+                    await updateDoc(doc(window.db, "progress", docId), {
+                        attempts: oldData.attempts + 1,
+                        totalScore: oldData.totalScore + percentage,
+                        lastDate: new Date()
+                    });
+                }
+            } catch (e) {
+                console.error('Error saving progress:', e);
+            }
+
+            // Update UI
+            document.getElementById('final-score').textContent = `${score}/${total}`;
+            document.getElementById('percentage').textContent = `${percentage}%`;
+            document.getElementById('correct-count').textContent = score;
+            document.getElementById('wrong-count').textContent = total - score;
+            document.getElementById('time-used').textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+
+            let grade = "", msg = "", gradeClass = "";
+            if (currentMode === 'professional') {
+                if (percentage >= 80) { grade = "Excellence"; msg = "🌟 Outstanding! Ready for real exam!"; gradeClass = "grade-excellence"; }
+                else if (percentage >= 70) { grade = "Better"; msg = "👍 Great job! More practice to excel."; gradeClass = "grade-good"; }
+                else if (percentage >= 50) { grade = "Good"; msg = "✅ Passed! Review weak areas."; gradeClass = "grade-good"; }
+                else { grade = "Fair"; msg = "📚 Keep studying! You'll improve."; gradeClass = "grade-fair"; }
+            } else {
+                if (percentage >= 70) { grade = "Excellent"; msg = "🎉 Fantastic work!"; gradeClass = "grade-excellence"; }
+                else if (percentage >= 50) { grade = "Good"; msg = "👍 Well done!"; gradeClass = "grade-good"; }
+                else { grade = "Needs Practice"; msg = "💪 Don't give up! Try again."; gradeClass = "grade-fair"; }
+            }
+            const gradeEl = document.getElementById('grade-display');
+            gradeEl.textContent = grade;
+            gradeEl.className = `grade-badge ${gradeClass}`;
+            document.getElementById('feedback-msg').textContent = msg;
+
+            showSection('result-section');
+
+            if (isSoundEnabled) {
+                speak(`Exam completed. Your score is ${score} out of ${total}, which is ${percentage} percent. Your grade is ${grade}.`);
+            }
+        }
+
+        // ==========================================
+        // 📊 CALCULATOR
+        // ==========================================
+        function openCalculator() {
+            const examState = {
+                currentQuestionIndex,
+                currentSubject,
+                currentTopic,
+                currentMode,
+                score,
+                userAnswers: JSON.parse(JSON.stringify(userAnswers)),
+                timeLeft,
+                totalTime,
+                examStartTime,
+                currentQuestions: JSON.parse(JSON.stringify(currentQuestions)),
+                isExamActive: true
+            };
+            localStorage.setItem('hgdl_examState', JSON.stringify(examState));
+            window.location.href = 'calculator.html';
+        }
+
+        function restoreExamState() {
+            const savedState = localStorage.getItem('hgdl_examState');
+            if (savedState) {
+                try {
+                    const state = JSON.parse(savedState);
+                    if (state.isExamActive) {
+                        currentQuestionIndex = state.currentQuestionIndex;
+                        currentSubject = state.currentSubject;
+                        currentTopic = state.currentTopic;
+                        currentMode = state.currentMode;
+                        score = state.score;
+                        userAnswers = state.userAnswers;
+                        timeLeft = state.timeLeft;
+                        totalTime = state.totalTime;
+                        examStartTime = state.examStartTime;
+                        currentQuestions = state.currentQuestions;
+                        document.getElementById('subject-badge').textContent = currentSubject.code;
+                        document.getElementById('mode-badge').textContent = currentMode.charAt(0).toUpperCase() + currentMode.slice(1) + ' Mode';
+
+                        startTimer();
+                        showSection('exam-section');
+                        loadQuestion(currentQuestionIndex);
+
+                        localStorage.removeItem('hgdl_examState');
+                        return true;
+                    }
+                } catch (e) {
+                    console.error('Error restoring state:', e);
+                }
+            }
+            return false;
+        }
+
+        // ==========================================
+        // 🚀 INITIALIZATION
+        // ==========================================
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Check if returning from calculator
+            if (restoreExamState()) return;
+
+            // Initialize speech on first click
+            document.addEventListener('click', function initSpeech() {
+                if (speechSynthesis && !speechSynthesis.pending) {
+                    const t = new SpeechSynthesisUtterance('');
+                    speechSynthesis.speak(t);
+                    speechSynthesis.cancel();
+                }
+                document.removeEventListener('click', initSpeech);
+            }, { once: true });
+        });
+    </script>
+</body>
+</html>
