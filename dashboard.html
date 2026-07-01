@@ -7,7 +7,7 @@
     
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, query, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, updateDoc, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSy...",
@@ -21,7 +21,7 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         window.db = db;
-        window.firestoreFns = { collection, addDoc, getDocs, doc, updateDoc, query, where };
+        window.firestoreFns = { collection, addDoc, getDocs, doc, deleteDoc, updateDoc, query, where, orderBy };
     </script>
 
     <style>
@@ -47,7 +47,8 @@
             --dark: #f7fafc;
             --text-primary: #f7fafc;
             --text-secondary: #e2e8f0;
-            --border-color: #4a5568;            --card-bg: #2d3748;
+            --border-color: #4a5568;
+            --card-bg: #2d3748;
             --input-bg: #1a202c;
         }
 
@@ -96,7 +97,8 @@
         }
 
         .school-name {
-            font-size: 1.8rem;            font-weight: 800;
+            font-size: 1.8rem;
+            font-weight: 800;
             background: linear-gradient(135deg, var(--primary), var(--secondary));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -145,7 +147,8 @@
 
         /* ============ LOGIN ============ */
         .login-card {
-            max-width: 500px;            margin: 30px auto;
+            max-width: 500px;
+            margin: 30px auto;
             text-align: center;
             padding: 40px 30px;
             background: var(--light);
@@ -194,7 +197,8 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 25px;
-            flex-wrap: wrap;            gap: 15px;
+            flex-wrap: wrap;
+            gap: 15px;
             padding-bottom: 20px;
             border-bottom: 2px solid var(--border-color);
         }
@@ -233,7 +237,7 @@
         .stat-value { font-size: 2rem; font-weight: bold; color: var(--primary); }
 
         /* ============ SUBJECTS GRID ============ */
-        .subjects-section h3 { margin-bottom: 20px; color: var(--primary); font-size: 1.3rem; }
+        .subjects-section h3 { margin-bottom: 20px; color: var(--primary); font-size: 1.3rem; margin-top: 25px; }
         .subjects-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -243,7 +247,8 @@
         .subject-card {
             background: var(--light);
             padding: 25px 20px;
-            border-radius: 15px;            border: 2px solid var(--border-color);
+            border-radius: 15px;
+            border: 2px solid var(--border-color);
             cursor: pointer;
             transition: all 0.3s;
             text-align: center;
@@ -266,6 +271,50 @@
             border-radius: 15px; 
             display: inline-block; 
             font-weight: 600;
+        }
+
+        /* ============ RESULT HISTORY TABLE ============ */
+        .history-table-container {
+            width: 100%;
+            overflow-x: auto;
+            background: var(--light);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            margin-top: 15px;
+        }
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+        .history-table th {
+            background: rgba(102, 126, 234, 0.1);
+            color: var(--primary);
+            padding: 12px 15px;
+            font-weight: 600;
+            border-bottom: 2px solid var(--border-color);
+        }
+        .history-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+        .history-table tr:last-child td { border-bottom: none; }
+        .delete-history-btn {
+            background: none;
+            color: var(--danger);
+            border: none;
+            padding: 4px 8px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            width: auto;
+            margin-top: 0;
+            display: inline-block;
+        }
+        .delete-history-btn:hover {
+            transform: scale(1.2);
+            box-shadow: none;
         }
 
         /* ============ FORM ELEMENTS ============ */
@@ -292,7 +341,8 @@
             flex-wrap: wrap;
             gap: 15px;
             padding: 20px;
-            background: var(--light);            border-radius: 15px;
+            background: var(--light);
+            border-radius: 15px;
         }
         .timer-container { text-align: center; }
         .timer-display { font-weight: bold; font-size: 2rem; color: var(--primary); }
@@ -309,7 +359,18 @@
             border-left: 5px solid var(--primary);
             box-shadow: 0 3px 10px rgba(0,0,0,0.05);
         }
-        .question-text { font-size: 1.2rem; font-weight: 600; margin-bottom: 20px; line-height: 1.6; }
+
+        .question-text { 
+            font-size: 1.15rem; 
+            font-weight: 500; 
+            color: #000000; 
+            margin-bottom: 20px; 
+            line-height: 1.6; 
+        }
+        [data-theme="dark"] .question-text {
+            color: #ffffff;
+        }
+
         .voice-hint {
             font-size: 0.9rem;
             color: var(--primary);
@@ -341,7 +402,8 @@
             font-size: 1rem;
         }
         .option-btn:hover:not(:disabled) { border-color: var(--primary); background: rgba(102, 126, 234, 0.05); transform: translateX(5px); }
-        .option-btn.correct { background: #c6f6d5; border-color: var(--success); color: #22543d; }        .option-btn.wrong { background: #fed7d7; border-color: var(--danger); color: #742a2a; }
+        .option-btn.correct { background: #c6f6d5; border-color: var(--success); color: #22543d; }
+        .option-btn.wrong { background: #fed7d7; border-color: var(--danger); color: #742a2a; }
         .option-btn.time-up { background: #fed7d7; border-color: var(--danger); opacity: 0.6; }
         .option-label { 
             font-weight: bold; 
@@ -390,7 +452,8 @@
             gap: 12px;
             margin: 25px auto;
             width: auto;
-        }        .calc-toggle-btn-large:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(17, 153, 142, 0.6); }
+        }
+        .calc-toggle-btn-large:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(17, 153, 142, 0.6); }
 
         /* ============ RESULT ============ */
         .result-card {
@@ -432,19 +495,20 @@
         .result-stat .label { font-size: 0.9rem; color: var(--text-secondary); }
         .result-stat .value { font-size: 2rem; font-weight: bold; color: var(--primary); margin-top: 8px; }
 
-        /* ============ FLOATING CONTROLS ============ */
+        /* ============ FLOATING CONTROLS (LIFTED HIGHER TO AVOID OBSTRUCTING HISTORY ENGINE) ============ */
         .floating-controls {
             position: fixed;
-            bottom: 25px;
-            right: 25px;
+            bottom: 270px;
+            right: 2px;
             display: flex;
             flex-direction: column;
-            gap: 12px;            z-index: 100;
+            gap: 10px;
+            z-index: 100;
         }
         .float-btn {
-            width: 55px;
-            height: 55px;
-            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            border-radius: 20%;
             background: rgba(255,255,255,0.95);
             backdrop-filter: blur(5px);
             cursor: pointer;
@@ -488,25 +552,26 @@
             transform: translate(-50%, -50%) scale(1);
             font-size: 3.5rem;
             font-weight: bold;
-            pointer-events: none;            opacity: 0;
+            pointer-events: none;
+            opacity: 0;
+            display: none;
             z-index: 999;
-            transition: all 0.3s;
             text-shadow: 2px 2px 15px rgba(0,0,0,0.3);
         }
 
         /* ============ ANIMATIONS ============ */
         @keyframes popIn { 
-            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
-            50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
-            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            0% { transform: translate(-50%, -50%) scale(0.5); }
+            50% { transform: translate(-50%, -50%) scale(1.2); }
+            100% { transform: translate(-50%, -50%) scale(1); }
         }
         @keyframes shake {
             0%, 100% { transform: translate(-50%, -50%); }
             25% { transform: translate(-52%, -50%); }
             75% { transform: translate(-48%, -50%); }
         }
-        .anim-pop { animation: popIn 0.3s ease; }
-        .anim-shake { animation: shake 0.3s ease; }
+        .anim-pop { animation: popIn 0.3s forwards; }
+        .anim-shake { animation: shake 0.3s forwards; }
 
         /* ============ RESPONSIVE ============ */
         @media (max-width: 768px) {
@@ -586,13 +651,37 @@
                 </div>
                 <div class="stat-card">
                     <div class="stat-label">📊 Avg Score</div>
-                    <div class="stat-value" id="stat-avg">0%</div>                </div>
+                    <div class="stat-value" id="stat-avg">0%</div>
+                </div>
             </div>
 
             <div class="subjects-section">
                 <h3>📚 Your Subjects</h3>
                 <div id="subjects-grid" class="subjects-grid">
                     <p style="color: var(--text-secondary);">Loading subjects...</p>
+                </div>
+            </div>
+
+            <!-- EXAM RESULT HISTORY ENGINE -->
+            <div class="subjects-section">
+                <h3>📊 Detailed Exam Result History</h3>
+                <div class="history-table-container">
+                    <table class="history-table">
+                        <thead>
+                            <tr>
+                                <th>Subject</th>
+                                <th>Topic</th>
+                                <th>Score</th>
+                                <th>Date</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-entries-container">
+                            <tr>
+                                <td colspan="5" style="text-align: center; padding: 20px;">No exam history logs found.</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -635,11 +724,12 @@
         <!-- ============ EXAM SECTION ============ -->
         <div id="exam-section" class="section">
             <div class="exam-header">
-                <div>                    <strong id="subject-badge" style="color: var(--primary); font-size: 1.2rem;">SUBJECT</strong><br>
+                <div>
+                    <strong id="subject-badge" style="color: var(--primary); font-size: 1.2rem;">SUBJECT</strong><br>
                     <small id="mode-badge" style="color: var(--text-secondary);">Mode</small>
                 </div>
                 <div class="timer-container">
-                    <div class="timer-display" id="timer-display">05:00</div>
+                    <div class="timer-display" id="timer-display">02:00:00</div>
                     <div class="timer-bar"><div class="timer-progress" id="timer-progress"></div></div>
                 </div>
                 <div style="text-align:right;">
@@ -700,7 +790,7 @@
                 </div>
             </div>
 
-            <button onclick="showSection('dashboard-section')">🔄 Back to Dashboard</button>
+            <button onclick="showSection('dashboard-section'); loadDashboard();">🔄 Back to Dashboard</button>
             <button class="secondary" onclick="studentLogout()">🚪 Logout</button>
         </div>
 
@@ -708,11 +798,25 @@
 
     <script>
         // ==========================================
-        // 🔐 CONFIGURATION
+        // ✅ FIRESTORE DESTRUCTURING SHIMS
+        // ==========================================
+        const collection = (...args) => window.firestoreFns.collection(...args);
+        const addDoc = (...args) => window.firestoreFns.addDoc(...args);
+        const getDocs = (...args) => window.firestoreFns.getDocs(...args);
+        const doc = (...args) => window.firestoreFns.doc(...args);
+        const deleteDoc = (...args) => window.firestoreFns.deleteDoc(...args);
+        const updateDoc = (...args) => window.firestoreFns.updateDoc(...args);
+        const query = (...args) => window.firestoreFns.query(...args);
+        const where = (...args) => window.firestoreFns.where(...args);
+        const orderBy = (...args) => window.firestoreFns.orderBy(...args);
+
+        // ==========================================
+        // 🔐 STATES
         // ==========================================
         let currentUser = null;
         let currentSubject = null;
         let currentTopic = null;
+        let currentTopicName = 'All Topics';
         let currentMode = '';
         let currentQuestions = [];
         let currentQuestionIndex = 0;
@@ -728,12 +832,12 @@
         let allSubjects = [];
         let allTopics = [];
 
-        const speechSynthesis = window.speechSynthesis;
         const positiveMessages = ["Wow!", "Amazing!", "Nice one!", "Good job!", "Excellent!", "Perfect!", "Correct!", "Fantastic!"];
         const negativeMessages = ["Oh sorry!", "Try again!", "Not quite!", "Incorrect!", "Wrong answer!", "Keep trying!"];
 
         // ==========================================
-        // 🎨 THEME & SOUND TOGGLES        // ==========================================
+        // 🎨 THEME & SOUND CONFIGURATION
+        // ==========================================
         if (localStorage.getItem('hgdl_theme') === 'dark') {
             document.documentElement.setAttribute('data-theme', 'dark');
         }
@@ -742,7 +846,7 @@
             isSoundEnabled = !isSoundEnabled;
             this.classList.toggle('muted', !isSoundEnabled);
             if (isSoundEnabled) speak("Sound enabled");
-            else speechSynthesis?.cancel();
+            else window.speechSynthesis?.cancel();
         });
 
         document.getElementById('theme-toggle').addEventListener('click', function() {
@@ -752,9 +856,6 @@
             localStorage.setItem('hgdl_theme', next);
         });
 
-        // ==========================================
-        // 🧭 NAVIGATION
-        // ==========================================
         function showSection(sectionId) {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
             document.getElementById(sectionId).classList.add('active');
@@ -762,8 +863,13 @@
             if (sectionId !== 'exam-section') {
                 clearInterval(timerInterval);
                 if (nextQuestionTimeout) { clearTimeout(nextQuestionTimeout); nextQuestionTimeout = null; }
+                window.speechSynthesis?.cancel();
+                // Assure clear visuals on transitions
+                const overlay = document.getElementById('feedback-overlay');
+                overlay.style.display = 'none';
+                overlay.style.opacity = '0';
+                overlay.textContent = '';
             }
-            
             window.scrollTo(0, 0);
         }
 
@@ -772,7 +878,7 @@
         }
 
         // ==========================================
-        // 🔐 STUDENT LOGIN
+        // 🔐 LOG IN ENGINE
         // ==========================================
         async function studentLogin() {
             const accessId = document.getElementById('access-id-input').value.trim().toUpperCase();
@@ -782,7 +888,8 @@
                 const q = query(collection(window.db, "registrations"), where("accessId", "==", accessId));
                 const snap = await getDocs(q);
 
-                if (snap.empty) {                    alert('❌ Invalid Access ID. Please check and try again.');
+                if (snap.empty) {
+                    alert('❌ Invalid Access ID. Please check and try again.');
                     return;
                 }
                 const userData = snap.docs[0].data();
@@ -792,19 +899,15 @@
                     return;
                 }
 
-                currentUser = {
-                    id: snap.docs[0].id,
-                    ...userData
-                };
+                currentUser = { id: snap.docs[0].id, ...userData };
 
-                // Update UI
                 document.getElementById('user-name').textContent = userData.fullName;
                 document.getElementById('user-course-info').textContent = 
                     `${userData.department} → ${userData.course} → ${userData.level} Level → ${userData.semester} Semester`;
                 document.getElementById('user-access-id').textContent = userData.accessId;
 
                 showSection('dashboard-section');
-                loadDashboard();
+                await loadDashboard();
 
                 if (isSoundEnabled) speak(`Welcome ${userData.fullName}`);
 
@@ -822,35 +925,65 @@
         }
 
         // ==========================================
-        // 📊 DASHBOARD
+        // 📊 DASHBOARD & RESULT HISTORY ENGINE
         // ==========================================
         async function loadDashboard() {
             try {
-                // Load subjects for this course
-                const q = query(collection(window.db, "subjects"), where("courseId", "==", currentUser.courseId));
-                const snap = await getDocs(q);
+                // 1. Get Course Subjects
+                const qSub = query(collection(window.db, "subjects"), where("courseId", "==", currentUser.courseId));
+                const snapSub = await getDocs(qSub);
                 allSubjects = [];
-                snap.forEach(d => allSubjects.push({ id: d.id, ...d.data() }));
+                snapSub.forEach(d => allSubjects.push({ id: d.id, ...d.data() }));
                 document.getElementById('stat-subjects').textContent = allSubjects.length;
-                // Load progress
-                const progressQ = query(collection(window.db, "progress"), where("user", "==", currentUser.accessId));
-                const progressSnap = await getDocs(progressQ);
-                let totalAttempts = 0;
-                let totalScore = 0;
-                progressSnap.forEach(d => {
-                    const p = d.data();
-                    totalAttempts += p.attempts || 0;
-                    totalScore += p.totalScore || 0;
-                });
+
+                // 2. Fetch Detailed Results History & Compute Progress stats
+                const historyQ = query(collection(window.db, "results"), where("user", "==", currentUser.accessId), orderBy("date", "desc"));
+                let historySnap;
+                try {
+                    historySnap = await getDocs(historyQ);
+                } catch(err) {
+                    const fallbackQ = query(collection(window.db, "results"), where("user", "==", currentUser.accessId));
+                    historySnap = await getDocs(fallbackQ);
+                }
+
+                let totalAttempts = historySnap.size;
+                let aggregateScore = 0;
+                let historyHTML = '';
+
+                if(historySnap.empty) {
+                    historyHTML = `<tr><td colspan="5" style="text-align: center; padding: 20px;">No exam history logs found.</td></tr>`;
+                } else {
+                    historySnap.forEach(docInstance => {
+                        const data = docInstance.data();
+                        aggregateScore += data.percentage || 0;
+                        
+                        let dateString = "N/A";
+                        if(data.date) {
+                            const t = data.date.toDate ? data.date.toDate() : new Date(data.date);
+                            dateString = t.toLocaleDateString() + ' ' + t.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                        }
+
+                        historyHTML += `
+                            <tr id="row-${docInstance.id}">
+                                <td><strong>${data.subjectCode || 'Subject'}</strong></td>
+                                <td>${data.topicName || 'All Topics'}</td>
+                                <td><span style="color: ${data.percentage >= 50 ? 'var(--success)' : 'var(--danger)'}; font-weight:bold;">${data.score} (${data.percentage}%)</span></td>
+                                <td><small>${dateString}</small></td>
+                                <td><button class="delete-history-btn" onclick="deleteHistoryRecord('${docInstance.id}')">🗑️</button></td>
+                            </tr>
+                        `;
+                    });
+                }
 
                 document.getElementById('stat-exams').textContent = totalAttempts;
-                const avg = totalAttempts > 0 ? Math.round(totalScore / totalAttempts) : 0;
-                document.getElementById('stat-avg').textContent = avg + '%';
+                const finalAvg = totalAttempts > 0 ? Math.round(aggregateScore / totalAttempts) : 0;
+                document.getElementById('stat-avg').textContent = finalAvg + '%';
+                document.getElementById('history-entries-container').innerHTML = historyHTML;
 
-                // Render subjects grid
+                // 3. Setup Subjects Cards
                 const grid = document.getElementById('subjects-grid');
                 if (allSubjects.length === 0) {
-                    grid.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 40px;">No subjects available yet. Check back later!</p>';
+                    grid.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 40px;">No subjects available yet.</p>';
                     return;
                 }
 
@@ -863,26 +996,52 @@
                     </div>
                 `).join('');
 
-                // Load question counts for each subject
                 for (const s of allSubjects) {
                     const qCount = query(collection(window.db, "questions"), where("subjectId", "==", s.id));
                     const qSnap = await getDocs(qCount);
-                    document.getElementById(`q-count-${s.id}`).textContent = `${qSnap.size} Questions`;
+                    const el = document.getElementById(`q-count-${s.id}`);
+                    if(el) el.textContent = `${qSnap.size} Questions`;
                 }
 
             } catch (e) {
-                console.error('Error loading dashboard:', e);
+                console.error('Error loading complete dashboard setup:', e);
+            }
+        }
+
+        async function deleteHistoryRecord(id) {
+            if(!confirm("Are you sure you want to delete this result entry from your history?")) return;
+            try {
+                await deleteDoc(doc(window.db, "results", id));
+                const row = document.getElementById(`row-${id}`);
+                if(row) row.remove();
+                
+                const historyQ = query(collection(window.db, "results"), where("user", "==", currentUser.accessId));
+                const historySnap = await getDocs(historyQ);
+                let totalAttempts = historySnap.size;
+                let aggregateScore = 0;
+                historySnap.forEach(d => { aggregateScore += d.data().percentage || 0; });
+                
+                document.getElementById('stat-exams').textContent = totalAttempts;
+                const finalAvg = totalAttempts > 0 ? Math.round(aggregateScore / totalAttempts) : 0;
+                document.getElementById('stat-avg').textContent = finalAvg + '%';
+                
+                if(totalAttempts === 0) {
+                    document.getElementById('history-entries-container').innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 20px;">No exam history logs found.</td></tr>`;
+                }
+            } catch(e) {
+                console.error("Error clearing record:", e);
+                alert("Failed to delete record: " + e.message);
             }
         }
 
         // ==========================================
-        // 📖 TOPIC SELECTION
+        // 📖 TOPICS SELECTION
         // ==========================================
         async function selectSubject(subjectId) {
             currentSubject = allSubjects.find(s => s.id === subjectId);
-            document.getElementById('selected-subject-display').textContent = `${currentSubject.code} - ${currentSubject.name}`;            showSection('topic-section');
+            document.getElementById('selected-subject-display').textContent = `${currentSubject.code} - ${currentSubject.name}`;
+            showSection('topic-section');
 
-            // Load topics
             try {
                 const q = query(collection(window.db, "topics"), where("subjectId", "==", subjectId));
                 const snap = await getDocs(q);
@@ -902,7 +1061,6 @@
                 document.getElementById('topic-question-count').style.display = 'none';
                 document.getElementById('proceed-to-mode-btn').disabled = true;
 
-                // Add change listener
                 topicSelect.onchange = async function() {
                     const val = this.value;
                     if (!val) {
@@ -913,8 +1071,11 @@
 
                     let q;
                     if (val === 'all') {
+                        currentTopicName = 'All Topics';
                         q = query(collection(window.db, "questions"), where("subjectId", "==", subjectId));
                     } else {
+                        const targetT = allTopics.find(t => t.id === val);
+                        currentTopicName = targetT ? targetT.name : 'Selected Topic';
                         q = query(collection(window.db, "questions"), where("subjectId", "==", subjectId), where("topicId", "==", val));
                     }
 
@@ -924,12 +1085,12 @@
                     document.getElementById('q-count-display').textContent = count;
                     document.getElementById('topic-question-count').style.display = 'block';
                     document.getElementById('proceed-to-mode-btn').disabled = (count === 0);
-
                     if (count === 0) {
-                        alert('⚠️ No questions available for this topic yet!');
+                        alert('⚠️ No questions available for this specific configuration yet!');
                     }
                 };
-            } catch (e) {                console.error('Error loading topics:', e);
+            } catch (e) {
+                console.error('Error loading topics:', e);
             }
         }
 
@@ -938,14 +1099,12 @@
             if (!topicVal) return alert('⚠️ Please select a topic');
 
             currentTopic = topicVal;
-            const topicName = topicVal === 'all' ? 'All Topics' : allTopics.find(t => t.id === topicVal)?.name || 'Unknown';
-            document.getElementById('selected-topic-display').textContent = topicName;
-
+            document.getElementById('selected-topic-display').textContent = currentTopicName;
             showSection('mode-section');
         }
 
         // ==========================================
-        // 🎯 EXAM START
+        // 🎯 EXAM CONTROLLER
         // ==========================================
         async function startExam() {
             currentMode = document.getElementById('mode-select').value;
@@ -967,18 +1126,17 @@
                     return;
                 }
 
-                // Shuffle questions
                 currentQuestions = questions.sort(() => Math.random() - 0.5);
                 currentQuestionIndex = 0;
                 score = 0;
                 userAnswers = {};
                 examStartTime = Date.now();
 
-                // Set timer based on mode
                 if (currentMode === 'beginner') {
                     timePerQuestion = 0;
-                    totalTime = 7200; // 2 hours
-                } else if (currentMode === 'advance') {                    timePerQuestion = 45;
+                    totalTime = 7200; // 2 Hours perfectly tracked
+                } else if (currentMode === 'advance') {
+                    timePerQuestion = 45;
                     totalTime = currentQuestions.length * 45;
                 } else {
                     timePerQuestion = 30;
@@ -987,17 +1145,15 @@
 
                 timeLeft = timePerQuestion > 0 ? timePerQuestion : totalTime;
 
-                // Update UI
                 document.getElementById('subject-badge').textContent = currentSubject.code;
                 document.getElementById('mode-badge').textContent = currentMode.charAt(0).toUpperCase() + currentMode.slice(1) + ' Mode';
 
-                startTimer();
                 showSection('exam-section');
+                updateTimerDisplay(); // Initial clean render setup
 
-                // Countdown
                 runCountdown(() => {
+                    startTimer();
                     loadQuestion(0);
-                    if (isSoundEnabled) speakQuestion(currentQuestions[0]);
                 });
 
             } catch (e) {
@@ -1027,9 +1183,7 @@
                 }
             }, 1000);
         }
-        // ==========================================
-        // ⏱️ TIMER
-        // ==========================================
+
         function startTimer() {
             if (timerInterval) clearInterval(timerInterval);
             updateTimerDisplay();
@@ -1045,9 +1199,22 @@
         }
 
         function updateTimerDisplay() {
-            const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
-            const s = (timeLeft % 60).toString().padStart(2, '0');
-            document.getElementById('timer-display').textContent = `${m}:${s}`;
+            if (timeLeft < 0) timeLeft = 0;
+            
+            let displayStr = "";
+            if (timeLeft >= 3600) {
+                // Render custom HH:MM:SS format for hours configurations smoothly
+                const hours = Math.floor(timeLeft / 3600).toString().padStart(2, '0');
+                const minutes = Math.floor((timeLeft % 3600) / 60).toString().padStart(2, '0');
+                const seconds = (timeLeft % 60).toString().padStart(2, '0');
+                displayStr = `${hours}:${minutes}:${seconds}`;
+            } else {
+                const minutes = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+                const seconds = (timeLeft % 60).toString().padStart(2, '0');
+                displayStr = `${minutes}:${seconds}`;
+            }
+            
+            document.getElementById('timer-display').textContent = displayStr;
 
             const pct = timePerQuestion > 0 ? (timeLeft / timePerQuestion) * 100 : (timeLeft / totalTime) * 100;
             const bar = document.getElementById('timer-progress');
@@ -1075,14 +1242,14 @@
                         timeLeft = timePerQuestion;
                         startTimer();
                     }
-                    if (isSoundEnabled) speakQuestion(currentQuestions[currentQuestionIndex]);
-                } else {                    finishExam(false);
+                } else {
+                    finishExam(false);
                 }
-            }, 5000);
+            }, 4000);
         }
 
         // ==========================================
-        // 📝 LOAD QUESTION
+        // 📝 LOAD & DISPLAY QUESTIONS
         // ==========================================
         function loadQuestion(idx) {
             if (!currentQuestions[idx]) return;
@@ -1133,16 +1300,17 @@
             const isLast = (idx === currentQuestions.length - 1);
             document.getElementById('next-btn').style.display = isLast ? 'none' : 'block';
             document.getElementById('submit-btn').style.display = isLast ? 'block' : 'none';
+
+            if (isSoundEnabled && !hasAnswered) {
+                setTimeout(() => { speakQuestion(q); }, 300);
+            }
         }
 
-        // ==========================================
-        // ✅ HANDLE ANSWER
-        // ==========================================
         function handleAnswer(idx, optIdx, btn) {
             if (userAnswers[idx] !== undefined) return;
 
             if (nextQuestionTimeout) { clearTimeout(nextQuestionTimeout); nextQuestionTimeout = null; }
-            if (speechSynthesis) speechSynthesis.cancel();
+            window.speechSynthesis?.cancel();
 
             userAnswers[idx] = optIdx;
             const correct = currentQuestions[idx].answer;
@@ -1158,24 +1326,19 @@
                     playTone(880, 0.1);
                     setTimeout(() => playTone(1100, 0.1), 100);
                 }
-
                 showFeedbackOverlay(true);
             } else {
                 btn.classList.add('wrong', 'anim-shake');
                 if (allBtns[correct]) allBtns[correct].classList.add('correct');
-
                 if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
 
-                if (isSoundEnabled) {
-                    playTone(200, 0.2);
-                }
-
+                if (isSoundEnabled) playTone(200, 0.2);
                 showFeedbackOverlay(false);
             }
 
             document.getElementById('explanation-box').style.display = 'block';
             document.getElementById('explanation-text').textContent = currentQuestions[idx].exp;
-            // Auto-advance for advance/professional modes
+
             if (currentMode === 'advance' || currentMode === 'professional') {
                 nextQuestionTimeout = setTimeout(() => {
                     if (idx < currentQuestions.length - 1) {
@@ -1185,49 +1348,53 @@
                             timeLeft = timePerQuestion;
                             startTimer();
                         }
-                        if (isSoundEnabled) speakQuestion(currentQuestions[currentQuestionIndex]);
                     } else {
                         finishExam(false);
                     }
-                }, 5000);
+                }, 4000);
             }
         }
 
         // ==========================================
-        // 🔊 VOICE & SOUND
+        // 🔊 HIGH PERFORMANCE ROBUST SPEECH IMPLEMENTATION
         // ==========================================
         function speak(text) {
-            if (!isSoundEnabled || !speechSynthesis) return;
-            speechSynthesis.cancel();
-            const u = new SpeechSynthesisUtterance(text);
-            u.rate = 0.9;
-            speechSynthesis.speak(u);
+            if (!isSoundEnabled || !window.speechSynthesis) return;
+            window.speechSynthesis.cancel();
+            
+            setTimeout(() => {
+                const u = new SpeechSynthesisUtterance(text);
+                u.rate = 0.95;
+                window.speechSynthesis.speak(u);
+            }, 50);
         }
 
         function speakQuestion(q) {
-            if (!isSoundEnabled || !speechSynthesis) return;
-            speechSynthesis.cancel();
+            if (!isSoundEnabled || !window.speechSynthesis) return;
+            window.speechSynthesis.cancel();
 
-            const questionUtterance = new SpeechSynthesisUtterance(q.q);
-            questionUtterance.rate = 0.85;
+            setTimeout(() => {
+                const questionUtterance = new SpeechSynthesisUtterance(q.q);
+                questionUtterance.rate = 0.9;
 
-            questionUtterance.onend = function() {
-                let optionIndex = 0;
-                function speakNextOption() {
-                    if (optionIndex >= q.options.length) return;
-                    const letter = String.fromCharCode(65 + optionIndex);
-                    const optionText = `Option ${letter}. ${q.options[optionIndex]}`;
-                    const optionUtterance = new SpeechSynthesisUtterance(optionText);
-                    optionUtterance.rate = 0.85;
-                    optionUtterance.onend = function() {
-                        optionIndex++;
-                        setTimeout(speakNextOption, 400);
-                    };
-                    speechSynthesis.speak(optionUtterance);                }
-                speakNextOption();
-            };
-
-            speechSynthesis.speak(questionUtterance);
+                questionUtterance.onend = function() {
+                    let optionIndex = 0;
+                    function speakNextOption() {
+                        if (optionIndex >= q.options.length || userAnswers[currentQuestionIndex] !== undefined) return;
+                        const letter = String.fromCharCode(65 + optionIndex);
+                        const optionText = `Option ${letter}: ${q.options[optionIndex]}`;
+                        const optionUtterance = new SpeechSynthesisUtterance(optionText);
+                        optionUtterance.rate = 0.9;
+                        optionUtterance.onend = function() {
+                            optionIndex++;
+                            setTimeout(speakNextOption, 300);
+                        };
+                        window.speechSynthesis.speak(optionUtterance);
+                    }
+                    speakNextOption();
+                };
+                window.speechSynthesis.speak(questionUtterance);
+            }, 50);
         }
 
         function replayCurrentQuestion() {
@@ -1259,43 +1426,51 @@
             if (isCorrect) {
                 msg = positiveMessages[Math.floor(Math.random() * positiveMessages.length)];
                 color = "#2e7d32";
-                overlay.style.animation = "popIn 0.3s forwards";
+                overlay.className = "anim-pop";
             } else {
                 msg = negativeMessages[Math.floor(Math.random() * negativeMessages.length)];
                 color = "#c62828";
-                overlay.style.animation = "shake 0.3s forwards";
+                overlay.className = "anim-shake";
             }
 
             overlay.textContent = msg;
             overlay.style.color = color;
+            overlay.style.display = "flex";
             overlay.style.opacity = "1";
 
             if (isSoundEnabled) speak(msg);
-            setTimeout(() => {
-                overlay.style.opacity = "0";            }, 1500);
+            
+            // Clean dynamic timeout resolution handles both scenarios perfectly
+            setTimeout(() => { 
+                overlay.style.opacity = "0"; 
+                setTimeout(() => {
+                    if(overlay.style.opacity === "0") {
+                        overlay.style.display = "none";
+                        overlay.textContent = "";
+                        overlay.className = "";
+                    }
+                }, 300);
+            }, 1500);
         }
 
         // ==========================================
-        // 🧭 NAVIGATION
+        // 🧭 MANUAL NAVIGATION CONTROLS
         // ==========================================
         function nextQuestion() {
             if (currentQuestionIndex < currentQuestions.length - 1) {
                 if (nextQuestionTimeout) { clearTimeout(nextQuestionTimeout); nextQuestionTimeout = null; }
-                clearInterval(timerInterval);
                 currentQuestionIndex++;
                 loadQuestion(currentQuestionIndex);
                 if (timePerQuestion > 0 && userAnswers[currentQuestionIndex] === undefined) {
                     timeLeft = timePerQuestion;
                     startTimer();
                 }
-                if (isSoundEnabled) speakQuestion(currentQuestions[currentQuestionIndex]);
             }
         }
 
         function prevQuestion() {
             if (currentQuestionIndex > 0) {
                 if (nextQuestionTimeout) { clearTimeout(nextQuestionTimeout); nextQuestionTimeout = null; }
-                clearInterval(timerInterval);
                 currentQuestionIndex--;
                 loadQuestion(currentQuestionIndex);
                 if (timePerQuestion > 0 && userAnswers[currentQuestionIndex] === undefined) {
@@ -1306,26 +1481,37 @@
         }
 
         function confirmQuitExam() {
-            if (confirm('⚠️ Are you sure you want to quit? Your progress will be lost!')) {
-                showSection('dashboard-section');
+            if(confirm("Are you sure you want to quit this exam? Progressive score changes will be submitted.")) {
+                finishExam(true);
             }
         }
 
         // ==========================================
-        // 🎉 FINISH EXAM
+        // 🎉 SUBMIT & SAVE RESULTS HISTORY LOGS
         // ==========================================
         async function finishExam(manual) {
             clearInterval(timerInterval);
             if (nextQuestionTimeout) { clearTimeout(nextQuestionTimeout); nextQuestionTimeout = null; }
+            window.speechSynthesis?.cancel();
 
             const timeUsed = Math.floor((Date.now() - examStartTime) / 1000);
             const mins = Math.floor(timeUsed / 60);
             const secs = timeUsed % 60;
+
             const total = currentQuestions.length;
             const percentage = Math.round((score / total) * 100);
 
-            // Save progress
             try {
+                await addDoc(collection(window.db, "results"), {
+                    user: currentUser.accessId,
+                    subjectId: currentSubject.id,
+                    subjectCode: currentSubject.code,
+                    topicName: currentTopicName,
+                    score: `${score}/${total}`,
+                    percentage: percentage,
+                    date: new Date()
+                });
+
                 const q = query(collection(window.db, "progress"), 
                     where("user", "==", currentUser.accessId), 
                     where("subjectId", "==", currentSubject.id));
@@ -1343,16 +1529,15 @@
                     const docId = snap.docs[0].id;
                     const oldData = snap.docs[0].data();
                     await updateDoc(doc(window.db, "progress", docId), {
-                        attempts: oldData.attempts + 1,
-                        totalScore: oldData.totalScore + percentage,
+                        attempts: (oldData.attempts || 0) + 1,
+                        totalScore: (oldData.totalScore || 0) + percentage,
                         lastDate: new Date()
                     });
                 }
             } catch (e) {
-                console.error('Error saving progress:', e);
+                console.error('Error logging detailed result history entry:', e);
             }
 
-            // Update UI
             document.getElementById('final-score').textContent = `${score}/${total}`;
             document.getElementById('percentage').textContent = `${percentage}%`;
             document.getElementById('correct-count').textContent = score;
@@ -1370,6 +1555,7 @@
                 else if (percentage >= 50) { grade = "Good"; msg = "👍 Well done!"; gradeClass = "grade-good"; }
                 else { grade = "Needs Practice"; msg = "💪 Don't give up! Try again."; gradeClass = "grade-fair"; }
             }
+
             const gradeEl = document.getElementById('grade-display');
             gradeEl.textContent = grade;
             gradeEl.className = `grade-badge ${gradeClass}`;
@@ -1378,18 +1564,19 @@
             showSection('result-section');
 
             if (isSoundEnabled) {
-                speak(`Exam completed. Your score is ${score} out of ${total}, which is ${percentage} percent. Your grade is ${grade}.`);
+                speak(`Exam completed. Your score is ${score} out of ${total}. Your grade status is ${grade}.`);
             }
         }
 
         // ==========================================
-        // 📊 CALCULATOR
+        // 📊 STATE CACHING FOR CALCULATOR CONTEXT SWITCHES
         // ==========================================
         function openCalculator() {
             const examState = {
                 currentQuestionIndex,
                 currentSubject,
                 currentTopic,
+                currentTopicName,
                 currentMode,
                 score,
                 userAnswers: JSON.parse(JSON.stringify(userAnswers)),
@@ -1412,6 +1599,7 @@
                         currentQuestionIndex = state.currentQuestionIndex;
                         currentSubject = state.currentSubject;
                         currentTopic = state.currentTopic;
+                        currentTopicName = state.currentTopicName || 'All Topics';
                         currentMode = state.currentMode;
                         score = state.score;
                         userAnswers = state.userAnswers;
@@ -1419,6 +1607,7 @@
                         totalTime = state.totalTime;
                         examStartTime = state.examStartTime;
                         currentQuestions = state.currentQuestions;
+
                         document.getElementById('subject-badge').textContent = currentSubject.code;
                         document.getElementById('mode-badge').textContent = currentMode.charAt(0).toUpperCase() + currentMode.slice(1) + ' Mode';
 
@@ -1437,18 +1626,16 @@
         }
 
         // ==========================================
-        // 🚀 INITIALIZATION
+        // 🚀 DOM INITIALIZATION ENTRYPOINT
         // ==========================================
         document.addEventListener('DOMContentLoaded', async () => {
-            // Check if returning from calculator
             if (restoreExamState()) return;
 
-            // Initialize speech on first click
             document.addEventListener('click', function initSpeech() {
-                if (speechSynthesis && !speechSynthesis.pending) {
+                if (window.speechSynthesis && !window.speechSynthesis.pending) {
                     const t = new SpeechSynthesisUtterance('');
-                    speechSynthesis.speak(t);
-                    speechSynthesis.cancel();
+                    window.speechSynthesis.speak(t);
+                    window.speechSynthesis.cancel();
                 }
                 document.removeEventListener('click', initSpeech);
             }, { once: true });

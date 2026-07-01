@@ -403,7 +403,10 @@
                     <div class="stat-card"><div class="stat-label">💵 Average per User</div><div class="stat-value" id="rev-avg">₦0</div></div>
                 </div>
                 <div class="card">
-                    <h3>💳 Transaction History</h3>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                        <h3>💳 Transaction History</h3>
+                        <button class="btn btn-danger btn-sm" onclick="confirmClearAllTransactions()">🧹 Clear All This Semester</button>
+                    </div>
                     <div id="transactions-list"><p style="color: var(--text-secondary);">Loading...</p></div>
                 </div>
             </div>
@@ -471,7 +474,11 @@
                 document.getElementById('stat-users').textContent = allUsers.length;
                 document.getElementById('stat-active').textContent = allUsers.filter(u => u.status === 'active').length;
                 document.getElementById('stat-paused').textContent = allUsers.filter(u => u.status === 'paused').length;
-                document.getElementById('stat-revenue').textContent = '₦' + (allUsers.length * PRICE_PER_USER).toLocaleString();
+                
+                // Only compute revenue based on users that currently have active payment amounts
+                const paidUsers = allUsers.filter(u => (u.amountPaid || 0) > 0);
+                document.getElementById('stat-revenue').textContent = '₦' + paidUsers.reduce((sum, u) => sum + (parseInt(u.amountPaid) || 0), 0).toLocaleString();
+                
                 const qSnap = await window.firestoreFns.getDocs(window.firestoreFns.collection(window.db, "questions"));
                 document.getElementById('stat-questions').textContent = qSnap.size;
                 const recent = [...allUsers].sort((a, b) => (b.createdAt?.toDate?.() || 0) - (a.createdAt?.toDate?.() || 0)).slice(0, 5);
@@ -494,7 +501,7 @@
             if (users.length === 0) { container.innerHTML = '<p style="text-align:center;padding:30px;">No users</p>'; document.getElementById('filtered-count').style.display = 'none'; return; }
             document.getElementById('filtered-count').style.display = users.length !== allUsers.length ? 'inline' : 'none';
             if(users.length !== allUsers.length) document.getElementById('filtered-num').textContent = users.length;
-            container.innerHTML = users.map(u => `<div class="list-item"><div class="item-info"><div class="main-text">🆔 ${u.accessId}</div><div class="sub-text">👤 ${u.fullName} | 📧 ${u.email}<br>📚 ${u.department} → ${u.course} → ${u.level}L ${u.semester} Sem<br>💰 ₦${u.amountPaid || 3000} | 📅 ${u.createdAt?.toDate?.().toLocaleDateString() || 'N/A'}</div></div><div class="item-actions"><span class="status-badge status-${u.status}">${u.status}</span>${u.status === 'active' ? `<button class="btn btn-warning btn-sm" onclick="toggleUserStatus('${u.id}', 'paused')">⏸️ Pause</button>` : `<button class="btn btn-success btn-sm" onclick="toggleUserStatus('${u.id}', 'active')">▶️ Resume</button>`}<button class="btn btn-danger btn-sm" onclick="confirmDeleteUser('${u.id}', '${u.accessId}')">🗑️ Delete</button></div></div>`).join('');
+            container.innerHTML = users.map(u => `<div class="list-item"><div class="item-info"><div class="main-text">🆔 ${u.accessId}</div><div class="sub-text">👤 ${u.fullName} | 📧 ${u.email}<br>📚 ${u.department} → ${u.course} → ${u.level}L ${u.semester} Sem<br>💰 ₦${u.amountPaid !== undefined ? u.amountPaid : 3000} | 📅 ${u.createdAt?.toDate?.().toLocaleDateString() || 'N/A'}</div></div><div class="item-actions"><span class="status-badge status-${u.status}">${u.status}</span>${u.status === 'active' ? `<button class="btn btn-warning btn-sm" onclick="toggleUserStatus('${u.id}', 'paused')">⏸️ Pause</button>` : `<button class="btn btn-success btn-sm" onclick="toggleUserStatus('${u.id}', 'active')">▶️ Resume</button>`}<button class="btn btn-danger btn-sm" onclick="confirmDeleteUser('${u.id}', '${u.accessId}')">🗑️ Delete</button></div></div>`).join('');
         }
         function filterUsers() {
             const search = document.getElementById('user-search').value.toLowerCase().trim();
@@ -951,15 +958,79 @@
         // ==========================================
         async function loadRevenue() {
             try {
-                const total = allUsers.length * PRICE_PER_USER;
-                document.getElementById('rev-total').textContent = '₦' + total.toLocaleString();
-                document.getElementById('rev-transactions').textContent = allUsers.length;
-                document.getElementById('rev-avg').textContent = '₦' + (allUsers.length > 0 ? Math.round(total / allUsers.length) : 0).toLocaleString();
-                const sorted = [...allUsers].sort((a, b) => (b.createdAt?.toDate?.() || 0) - (a.createdAt?.toDate?.() || 0));
-                document.getElementById('transactions-list').innerHTML = sorted.length === 0 ? '<p>No transactions</p>' :
-                    `<table class="data-table"><thead><tr><th>Date</th><th>Access ID</th><th>Name</th><th>Course</th><th>Amount</th><th>Ref</th></tr></thead><tbody>${sorted.map(u => `<tr><td>${u.createdAt?.toDate?.().toLocaleDateString() || 'N/A'}</td><td><strong>${u.accessId}</strong></td><td>${u.fullName}</td><td>${u.course} ${u.level}L</td><td style="color: var(--success); font-weight: bold;">₦${u.amountPaid || 3000}</td><td style="font-size: 0.75rem;">${u.paystackReference?.substring(0, 15) || 'N/A'}...</td></tr>`).join('')}</tbody></table>`;
+                // Fetch latest state from firestore to match perfectly
+                const snap = await window.firestoreFns.getDocs(window.firestoreFns.collection(window.db, "registrations"));
+                allUsers = []; snap.forEach(d => allUsers.push({ id: d.id, ...d.data() }));
+
+                // Filter users who have active payments recorded (> 0)
+                const sortedTransactionUsers = allUsers.filter(u => (u.amountPaid || 0) > 0)
+                                                    .sort((a, b) => (b.createdAt?.toDate?.() || 0) - (a.createdAt?.toDate?.() || 0));
+
+                const totalRevenue = sortedTransactionUsers.reduce((sum, u) => sum + (parseInt(u.amountPaid) || 0), 0);
+                
+                document.getElementById('rev-total').textContent = '₦' + totalRevenue.toLocaleString();
+                document.getElementById('rev-transactions').textContent = sortedTransactionUsers.length;
+                document.getElementById('rev-avg').textContent = '₦' + (sortedTransactionUsers.length > 0 ? Math.round(totalRevenue / sortedTransactionUsers.length) : 0).toLocaleString();
+                
+                document.getElementById('transactions-list').innerHTML = sortedTransactionUsers.length === 0 ? '<p style="padding:15px;color:var(--text-secondary);">No transactions this semester.</p>' :
+                    `<table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Access ID</th>
+                                <th>Name</th>
+                                <th>Course</th>
+                                <th>Amount</th>
+                                <th>Ref</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${sortedTransactionUsers.map(u => `<tr>
+                                <td>${u.createdAt?.toDate?.().toLocaleDateString() || 'N/A'}</td>
+                                <td><strong>${u.accessId}</strong></td>
+                                <td>${u.fullName}</td>
+                                <td>${u.course} ${u.level}L</td>
+                                <td style="color: var(--success); font-weight: bold;">₦${(u.amountPaid || 0).toLocaleString()}</td>
+                                <td style="font-size: 0.75rem;">${u.paystackReference?.substring(0, 15) || 'N/A'}...</td>
+                                <td><button class="btn btn-danger btn-sm" style="padding: 4px 8px; font-size: 0.75rem;" onclick="confirmClearSingleTransaction('${u.id}', '${u.accessId}')">🧹 Clear</button></td>
+                            </tr>`).join('')}
+                        </tbody>
+                    </table>`;
             } catch (e) { console.error(e); }
         }
+
+        function confirmClearSingleTransaction(id, accessId) {
+            showModal('🧹 Clear Transaction History', `Clear statement details for <strong>${accessId}</strong>? User account details and dashboard login tokens will remain intact.`, async () => {
+                try {
+                    await window.firestoreFns.updateDoc(window.firestoreFns.doc(window.db, "registrations", id), {
+                        amountPaid: 0,
+                        paystackReference: ""
+                    });
+                    await loadRevenue();
+                } catch(e) { alert('Error updating data profile context.'); }
+                closeModal();
+            });
+        }
+
+        function confirmClearAllTransactions() {
+            const structuralTxUsers = allUsers.filter(u => (u.amountPaid || 0) > 0);
+            if(structuralTxUsers.length === 0) return alert('No transaction states present to reset.');
+            
+            showModal('⚠️ Reset Semester Logs', `Clear financials for all ${structuralTxUsers.length} user records? User verification lines remain untouched so current logins do not disconnect.`, async () => {
+                try {
+                    for (const u of structuralTxUsers) {
+                        await window.firestoreFns.updateDoc(window.firestoreFns.doc(window.db, "registrations", u.id), {
+                            amountPaid: 0,
+                            paystackReference: ""
+                        });
+                    }
+                    await loadRevenue();
+                } catch(e) { alert('Error processing workspace variables.'); }
+                closeModal();
+            });
+        }
+
         function showModal(title, message, onConfirm) {
             document.getElementById('modal-title').textContent = title; document.getElementById('modal-message').innerHTML = message;
             document.getElementById('confirm-modal').classList.add('active');
